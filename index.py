@@ -1,10 +1,7 @@
-from dash import html, dcc
-from dash.dependencies import Input, Output
+from dash import html, dcc, Input, Output
 import dash_bootstrap_components as dbc
 
-from dotsama.index import layout as layout_dotsama
 from hockeyviewer.index import layout as layout_hockeyviewer
-from overview.index import layout as layout_overview
 
 from app import app
 
@@ -14,9 +11,7 @@ server = app.server
 def navbar():
     return dbc.NavbarSimple(
         children=[
-            dbc.NavItem(dbc.NavLink("Overview", href='/overview')),
-            dbc.NavItem(dbc.NavLink("Dotsama", href='/dotsama')),
-            dbc.NavItem(dbc.NavLink("NHL Stats", href='/nhlstats'))
+            dbc.NavItem(dbc.NavLink("Hockey Viewer", href='/hockeyviewer'))
         ],
         brand="Austin's Portfolio",
         brand_href="#",
@@ -42,11 +37,9 @@ app.layout = html.Div(
               [Input('url', 'pathname')])
 def display_page(pathname):
     if pathname == "/dotsama":
-        return layout_dotsama
-    elif pathname == '/nhlstats':
         return layout_hockeyviewer
     else:
-        return layout_overview
+        return layout_hockeyviewer
 
 if __name__ == '__main__':
     app.run_server(debug=True)

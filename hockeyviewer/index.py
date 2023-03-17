@@ -1,9 +1,8 @@
-from dash import dcc, html
-from dash.dependencies import Input, Output
+from dash import dcc, html, Input, Output
 
 from hockeyviewer.nhlscraper import teamcolors
-from hockeyviewer.age_weight_height import layout as layout_awh
-from hockeyviewer.standings import layout as layout_standings
+from hockeyviewer.tabs.age_weight_height import layout as layout_awh
+from hockeyviewer.tabs.wins_age_weight_height import layout as layout_wins_awh
 from app import app
 
 tab_selected_style = {
@@ -42,8 +41,8 @@ layout = html.Div(
             [
                 dcc.Tabs(id="tabs-hockeyviewer", value='tab-players',
                     children=[
-                        dcc.Tab(label='Player Age, Height & Weight', value='tab-players', selected_style=tab_selected_style),
-                        #dcc.Tab(label='Standings', value='tab-standings', selected_style=tab_selected_style),
+                        dcc.Tab(label='Basic: Player Age, Height & Weight', value='tab-players', selected_style=tab_selected_style),
+                        dcc.Tab(label='Standings', value='tab-standings', selected_style=tab_selected_style),
                         #dcc.Tab(label='Player Nationality', value='tab-nationality', selected_style=tab_selected_style),
                         #dcc.Tab(label='Team Shots', value='tab-nationality', selected_style=tab_selected_style)
                     ],
@@ -63,4 +62,4 @@ def display_page(active_tab):
     if active_tab == 'tab-players':
         return layout_awh
     else:
-        return layout_standings
+        return layout_wins_awh

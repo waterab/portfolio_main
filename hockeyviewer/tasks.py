@@ -12,7 +12,7 @@ import asyncio
 import aiohttp
 import time
 import urllib.request
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 
 from hockeyviewer.nhlscraper import nhlstats
 from app import engine
@@ -102,15 +102,16 @@ def update_players():
     #     ),
     # )
 
-#store_seasonal()
-#collect_playerdetails_basic()
-#update_players()
+# store_seasonal()
+# collect_playerdetails_basic()
+# update_players()
 
 # All seasons
 seasons = nhlstats().seasons()["seasonId"].to_list()
 latest_season = seasons[-1] # latest season from list
 
-df_people = pd.read_sql_table("players", con=engine)
+query_people = 'SELECT * FROM players'
+df_people = pd.read_sql_query(sql=text(query_people), con=engine.connect())
 df_people["height_feet"] = df_people["height"].str.split("'").str[0].astype(int)
 df_people["height_in"] = df_people["height"].str.split(" ").str[-1].str.replace("\"", "").astype(int)
 df_people["height_calc"] = df_people["height_feet"]*12 + df_people["height_in"]
