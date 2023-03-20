@@ -102,8 +102,43 @@ def update_players():
     #     ),
     # )
 
+def playerstats_tenyears():
+    engine = create_engine("sqlite:///C:\\Users\\WaterDev\\Documents\\GitHub\\portfolio_main\\hockeyviewer\\db_temp\\db2.db")
+    query_people = 'SELECT * FROM playersTenYears'
+    df_players = pd.read_sql_query(sql=text(query_people), con=engine.connect())
+    playerids = df_players['person.id'].unique()
+seasons = df_players['season'].unique()
+
+def build_playerstats(player, season):
+    df_players = pd.DataFrame()
+    df = nhlstats().playerSeasonStats(player, season)
+    df['season'] = season
+    df['person.id'] = player
+    df_players = df_players.append(df)
+    return df_players
+    # Use threader
+    def run_downloader_playerlist(process:int, playerids:list, season:str):
+        print(process)
+        len_playerids = len(playerids)
+        df_players = pd.DataFrame()
+        season_playerids = [season]*len_playerids
+        results = ThreadPool(process).starmap(build_playerstats, zip(playerids, season_playerids))
+        for r in results:
+            df_players = df_players.append(r)
+        return df_players
+    try:
+        num_process = int(sys.argv[2])
+    except:
+        num_process = 100
+    df_plyr_stats_ten = pd.DataFrame()
+    for season in seasons:
+        print(season)
+        df_plyr_stats = run_downloader_playerlist(num_process, playerids, season)
+        df_plyr_stats_ten = df_plyr_stats_ten.append(df_plyr_stats)
+    df_plyr_stats_ten.to_sql('playersTenStats', con=engine, if_exists='replace')
+
 # store_seasonal()
-collect_playerdetails_basic()
+# collect_playerdetails_basic()
 # update_players()
 
 # All seasons
