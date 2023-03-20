@@ -100,9 +100,9 @@ layout = html.Div(
 )
 
 @app.callback(
-    [Output("plot-ahw", "figure"),,
-    [Input("drop-ahw-xaxis", "value"),
-    Input("drop-ahw-yaxis", "value")]
+    [Output("plot-stats-ahw", "figure"),,
+    [Input("drop-stats-ahw-xaxis", "value"),
+    Input("drop-stats-ahw-yaxis", "value")]
 )
 
 def build_compareall_stats(xaxis, yaxis):

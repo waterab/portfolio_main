@@ -107,15 +107,14 @@ def playerstats_tenyears():
     query_people = 'SELECT * FROM playersTenYears'
     df_players = pd.read_sql_query(sql=text(query_people), con=engine.connect())
     playerids = df_players['person.id'].unique()
-seasons = df_players['season'].unique()
-
-def build_playerstats(player, season):
-    df_players = pd.DataFrame()
-    df = nhlstats().playerSeasonStats(player, season)
-    df['season'] = season
-    df['person.id'] = player
-    df_players = df_players.append(df)
-    return df_players
+    seasons = df_players['season'].unique()
+    def build_playerstats(player, season):
+        df_players = pd.DataFrame()
+        df = nhlstats().playerSeasonStats(player, season)
+        df['season'] = season
+        df['person.id'] = player
+        df_players = df_players.append(df)
+        return df_players
     # Use threader
     def run_downloader_playerlist(process:int, playerids:list, season:str):
         print(process)
