@@ -53,6 +53,13 @@ class nhlstats():
         df = pd.json_normalize(js)
         return df
 
+    def playerSeasonStats(self, player_id, season):
+        url = self.url + "people/{}/stats?stats=statsSingleSeason&season={}".format(player_id, season)
+        r = requests.get(url)
+        js = r.json()
+        df = pd.json_normalize(js["stats"], record_path=["splits"])
+        return df
+
     def seasons(self):
         url = self.url + "seasons"
         r = requests.get(url)
