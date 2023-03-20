@@ -41,8 +41,8 @@ layout = html.Div(
             [
                 dcc.Tabs(id="tabs-hockeyviewer", value='tab-players',
                     children=[
-                        dcc.Tab(label='Basic: Player Age, Height & Weight', value='tab-players', selected_style=tab_selected_style),
-                        dcc.Tab(label='Standings', value='tab-standings', selected_style=tab_selected_style),
+                        dcc.Tab(label='Player Age, Height & Weight (Current Season)', value='tab-players', selected_style=tab_selected_style),
+                        dcc.Tab(label='Wins Vs. Attributes', value='tab-players-attr', selected_style=tab_selected_style),
                         #dcc.Tab(label='Player Nationality', value='tab-nationality', selected_style=tab_selected_style),
                         #dcc.Tab(label='Team Shots', value='tab-nationality', selected_style=tab_selected_style)
                     ],

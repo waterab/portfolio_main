@@ -103,7 +103,7 @@ def update_players():
     # )
 
 # store_seasonal()
-# collect_playerdetails_basic()
+collect_playerdetails_basic()
 # update_players()
 
 # All seasons
