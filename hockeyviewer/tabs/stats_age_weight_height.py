@@ -1,16 +1,18 @@
-from dash import html, dcc, dash_table
+from dash import html, dcc, dash_table, Input, Output, State
 
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 
 import plotly.graph_objects as go
 import plotly.express as px
 import numpy as np
+import pandas as pd
+from sqlalchemy import create_engine, text
+
 
 from hockeyviewer.nhlscraper import teamcolors
 from hockeyviewer.tasks import df_people
-from app import app
+from app import app, engine
 
 tab_selected_style = {
     'borderTop': '1px solid #242a44',
@@ -32,9 +34,12 @@ def compare_stats_attr():
                                             dcc.Dropdown(
                                                 id="drop-stats-ahw-xaxis",
                                                 options=[
-                                                    {"label": "PPG", "value": "ppg"},
+                                                    {"label": "Age", "value": "currentAge"},
+                                                    {"label": "BMI", "value": "bmi"},
+                                                    {"label": "Height", "value": "height_calc"},
+                                                    {"label": "Weight", "value": "weight"}
                                                 ],
-                                                value="ppg",
+                                                value="bmi",
                                                 clearable=False,
                                                 style={"width": "100%"}
                                             )
@@ -53,12 +58,9 @@ def compare_stats_attr():
                                             dcc.Dropdown(
                                                 id="drop-stats-ahw-yaxis",
                                                 options=[
-                                                    {"label": "Age", "value": "currentAge"},
-                                                    {"label": "BMI", "value": "bmi"}
-                                                    {"label": "Height", "value": "height_calc"},
-                                                    {"label": "Weight", "value": "weight"}
+                                                    {"label": "PPG", "value": "ppg"},
                                                 ],
-                                                value="BMI",
+                                                value="ppg",
                                                 clearable=False,
                                                 style={"width": "100%"}
                                             )
@@ -100,7 +102,7 @@ layout = html.Div(
 )
 
 @app.callback(
-    [Output("plot-stats-ahw", "figure"),,
+    Output("plot-stats-ahw", "figure"),
     [Input("drop-stats-ahw-xaxis", "value"),
     Input("drop-stats-ahw-yaxis", "value")]
 )
@@ -117,15 +119,16 @@ def build_compareall_stats(xaxis, yaxis):
     df_20 = df[df['stat.games'] >= 20]
 
     # create bin based on selection
-    df_20['bins'] = pd.qcut(df_20[yaxis], 4)
+    df_20['bins'] = pd.qcut(df_20[xaxis], 4)
     df_20 = df_20.sort_values(by=['bins'])
-    plot = px.box(df_20, x=xaxis, y='bins', color='primaryPosition.name')
+    df_20['bins'] = df_20['bins'].astype(str)
+    plot = px.box(df_20, x='bins', y=yaxis, color='primaryPosition.name')
 
     plot.update_layout(
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
         margin=dict(l=0, r=20, t=20, b=20),
-        showlegend=False
+        showlegend=True
     )
     plot.update_xaxes(
         title="<b>{}".format(xaxis),
