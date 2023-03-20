@@ -32,11 +32,9 @@ def compare_stats_attr():
                                             dcc.Dropdown(
                                                 id="drop-stats-ahw-xaxis",
                                                 options=[
-                                                    {"label": "Age", "value": "Age"},
-                                                    {"label": "Height", "value": "Height"},
-                                                    {"label": "Weight", "value": "Weight"}
+                                                    {"label": "PPG", "value": "ppg"},
                                                 ],
-                                                value="Height",
+                                                value="ppg",
                                                 clearable=False,
                                                 style={"width": "100%"}
                                             )
@@ -55,11 +53,12 @@ def compare_stats_attr():
                                             dcc.Dropdown(
                                                 id="drop-stats-ahw-yaxis",
                                                 options=[
-                                                    {"label": "Age", "value": "Age"},
-                                                    {"label": "Height", "value": "Height"},
-                                                    {"label": "Weight", "value": "Weight"}
+                                                    {"label": "Age", "value": "currentAge"},
+                                                    {"label": "BMI", "value": "bmi"}
+                                                    {"label": "Height", "value": "height_calc"},
+                                                    {"label": "Weight", "value": "weight"}
                                                 ],
-                                                value="Weight",
+                                                value="BMI",
                                                 clearable=False,
                                                 style={"width": "100%"}
                                             )
@@ -107,6 +106,21 @@ layout = html.Div(
 )
 
 def build_compareall_stats(xaxis, yaxis):
+    query_ppl_stats = 'SELECT * FROM playersTenStats'
+    df_ppl_stats = pd.read_sql_query(sql=text(query_ppl_stats), con=engine.connect())
+    df = df_ppl_stats.merge(df_people, left_on='person.id', right_on='id')
+    # add bmi col
+    df['bmi'] = (df['weight'].astype(int) / df['height_calc'].astype(int) / df['height_calc'].astype(int))*703
+    # add ppg col
+    df['ppg'] = df['stat.points']/df['stat.games']
+    # keep 20 games or more for season
+    df_20 = df[df['stat.games'] >= 20]
+
+    # create bin based on selection
+    df_20['bins'] = pd.qcut(df_20[yaxis], 4)
+    df_20 = df_20.sort_values(by=['bins'])
+    plot = px.box(df_20, x=xaxis, y='bins', color='primaryPosition.name')
+
     plot.update_layout(
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
