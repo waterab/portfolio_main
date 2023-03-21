@@ -131,7 +131,7 @@ def compare_all():
                     )
                 ],
                 className="block card",
-                style={"width": "calc(55% - 0px)"}
+                style={"width": "calc(50% - 0px)"}
             ),
             html.Div(
                 [
