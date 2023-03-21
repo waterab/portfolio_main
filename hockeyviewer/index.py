@@ -12,31 +12,6 @@ tab_selected_style = {
 
 layout = html.Div(
     [
-        html.Header(
-            [
-                html.Div(
-                    [
-                        html.Div(
-                            [
-                                "NHL STATS"
-                            ],
-                            className="title",
-                            style={
-                                "white-space": "nowrap",
-                                "line-height": "60px"
-                            }
-                        )
-                    ],
-                    className="layout-title")
-            ],
-            className="layout-header",
-            style={
-                "display": "flex",
-                "flex-flow": "row wrap-reverse",
-                "justify-content": "space-between",
-                "height": "auto"
-            }
-        ),
         html.Div(
             [
                 dcc.Tabs(id="tabs-hockeyviewer", value='tab-players',
