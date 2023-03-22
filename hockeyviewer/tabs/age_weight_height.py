@@ -333,7 +333,7 @@ def build_detail_row(col):
                     )
                 ],
                 className="block card",
-                style={"width": "calc(45% - 0px)"}
+                style={"width": "calc(40% - 0px)"}
             ),
             html.Div(
                 [
