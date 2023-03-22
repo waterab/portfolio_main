@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 import numpy as np
 
-from hockeyviewer.nhlscraper import teamcolors
+from hockeyviewer.nhlscraper import nhlstats, teamcolors
 from hockeyviewer.tasks import df_people
 from app import app
 
@@ -91,6 +91,26 @@ def compare_all():
                             ),
                             html.Div(
                                 [
+                                    html.Div("Marker Size", className="control--label"),
+                                    html.Div(
+                                        [
+                                            dcc.Dropdown(
+                                                options=[
+                                                    {"label": "Team Wins (^3)", "value": "Wins"},
+                                                ],
+                                                value="Wins",
+                                                clearable=False,
+                                                style={"width": "100%"}
+                                            )
+                                        ],
+                                        className="control--item",
+                                    )
+                                ],
+                                className="control control--vertical label--top label--text--left",
+                                style={"width": "calc(100% - 0px)"}
+                            ),
+                            html.Div(
+                                [
                                     html.Div("Z-Axis", className="control--label"),
                                     html.Div(
                                         [
@@ -124,7 +144,8 @@ def compare_all():
                 [
                     html.Div(
                         [
-                            html.Div([" Plot for Average by Team"], className="card-header"),
+                            html.Div(["Average Attribute by TeamMarker Size = Team Wins (cubed for size)"], className="card-header"),
+                            html.Div(["Marker Size = Team Wins (cubed for size)"], className="card-header"),
                             dbc.Spinner([dcc.Graph(id="plot-ahw")], color="primary", type="grow")
                         ],
                         className="card--content"
@@ -218,34 +239,52 @@ def build_detail_row(col):
         gridcolor='Gray'
     )
     #df_people_mean_col = df_people_mean_col.sort_values(by=[col], ascending=False)
-    plot_team = px.box(df_people_mean_col, x="currentTeam.name", y=col, color="currentTeam.name", color_discrete_map=teamcolors, custom_data=["currentTeam.id"])
+    # add wins and sort
+    # Add size for wins
+    df_records = nhlstats().standings()[['team.name', 'leagueRecord.wins']]
+    # use team name to set size to images
+    # merge add wins to team averages
+    df_people_mean_col = df_people_mean_col.merge(df_records, left_on='currentTeam.name', right_on='team.name')
+    df_people_mean_col = df_people_mean_col.sort_values(by=['leagueRecord.wins'], ascending=False)
+    #df_people_mean_col['leagueRecord.wins'] = df_people_mean_col['leagueRecord.wins'].astype(str)
+    plot_team = px.box(df_people_mean_col, x="leagueRecord.wins", y=col, boxmode='overlay', notched=True, color="currentTeam.name", color_discrete_map=teamcolors, custom_data=["currentTeam.id"])
     plot_team.update_layout(
         showlegend=False,
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
-        margin=dict(l=0, r=20, t=20, b=20),
+        #margin=dict(l=0,  t=20, b=20),
     )
-    plot_team.update_xaxes(title="<b>Team", type="category")
+    #plot_team.update_xaxes(type="category")
     plot_team.update_yaxes(
         title="<b>Current {}".format(map_stats[col]),
         showgrid=True,
         gridwidth=1,
         gridcolor='Gray'
     )
-    # Add logo
-    for x in plot_team['data']:
-        if x['x'] is not None:
-            team = x['legendgroup']
-            team_x = x['x']
-            team_y = x['y']
-            team_id = x["customdata"][0][0]
+
+    #add medin scatter for logos
+    df_teammean = df_people_mean_col.groupby(["currentTeam.id", 'leagueRecord.wins'])[col].mean().reset_index()
+    plot_team.add_scatter(x=df_teammean['leagueRecord.wins'], y=df_teammean[col], mode='markers', customdata=df_teammean['currentTeam.id'])
+    print(plot_team['data'][-1]['customdata'])
+
+    for x,y,z in zip(plot_team['data'][-1]['x'], plot_team['data'][-1]['y'], plot_team['data'][-1]['customdata']):
+        print(x,y,z)
+    #
+    # # Add logo
+    # for x in plot_team['data']['Scatter']:
+    #     print(x)
+        if x is not None:
+            #team = x['legendgroup']
+            team_x = x
+            team_y = y
+            team_id = z
             # find logo url based on team name
             logo = app.get_asset_url('logos/' + str(team_id) + '.svg')
             plot_team.add_layout_image(
                 dict(
                     source=logo,
-                    x=np.array(team_x[0]),
-                    y=np.array(map_teammean[team_id]),
+                    x=team_x,
+                    y=team_y,
                 ))
     plot_team.update_layout_images(dict(
             xref="x",
@@ -255,51 +294,52 @@ def build_detail_row(col):
             xanchor='center',
             yanchor='middle'
     ))
-    # Table averages
-    df_mean_table = df_people.groupby(["currentTeam.id", "currentTeam.name"])[col].mean().round(0).reset_index()
-    df_mean_table = df_mean_table.sort_values(by=[col], ascending=False)
-    df_mean_table.columns = ["id", "Team", col]
-    def f(row):
-        logo = app.get_asset_url('logos/' + str(row['id']) + '.svg')
-        return '![{0}]({0}#thumbnail)'.format(logo)
-    df_mean_table.insert(loc=0, column='', value=df_mean_table.apply(f, axis=1))
-    df_mean_table = df_mean_table[["", "Team", col]]
-    table = dash_table.DataTable(
-        columns=[{'id': c, 'name': c} if c != '' else {'name': c, 'id':c, 'type':'text', 'presentation':'markdown'} for c in df_mean_table.columns],
-        data=df_mean_table.to_dict('records'),
-        page_size=7,
-        sort_action="native",
-        style_header={
-            'fontWeight': 'bold',
-            'font-family': '"Open Sans", sans-serif',
-            'textAlign': 'center',
-            'font-size': '10px',
-            'vertical-align': 'middle',
-            #'background-color': 'black',
-            #'color': 'white'
-        },
-        style_cell={
-            'textAlign': 'center',
-            'fontWeight': 'bold',
-            'font-family': '"Open Sans", sans-serif',
-            'border': '1px solid #F7F7F7',
-            'border-bottom': '1px solid black',
-            'font-size': '12px',
-            'backgroundColor': '#F7F7F7',
-            'maxHeight': '40px',
-            'minWidth': '0px', 'maxWidth': '96px',
-
-        },
-        style_cell_conditional=[
-            {'if': {'column_id': ''},
-             'minWidth': '40px', 'width': '50px', 'maxWidth': '40px',
-             'textAlign': 'center',},
-        ],
-        style_table={
-            'padding': '0px',
-        },
-        style_as_list_view=True,
-    )
+    # print(plot_team)
+    # # Table averages
+    # df_mean_table = df_people.groupby(["currentTeam.id", "currentTeam.name"])[col].mean().round(0).reset_index()
+    # df_mean_table = df_mean_table.sort_values(by=[col], ascending=False)
+    # df_mean_table.columns = ["id", "Team", col]
+    # def f(row):
+    #     logo = app.get_asset_url('logos/' + str(row['id']) + '.svg')
+    #     return '![{0}]({0}#thumbnail)'.format(logo)
+    # df_mean_table.insert(loc=0, column='', value=df_mean_table.apply(f, axis=1))
+    # df_mean_table = df_mean_table[["", "Team", col]]
+    # table = dash_table.DataTable(
+    #     columns=[{'id': c, 'name': c} if c != '' else {'name': c, 'id':c, 'type':'text', 'presentation':'markdown'} for c in df_mean_table.columns],
+    #     data=df_mean_table.to_dict('records'),
+    #     page_size=7,
+    #     sort_action="native",
+    #     style_header={
+    #         'fontWeight': 'bold',
+    #         'font-family': '"Open Sans", sans-serif',
+    #         'textAlign': 'center',
+    #         'font-size': '10px',
+    #         'vertical-align': 'middle',
+    #         #'background-color': 'black',
+    #         #'color': 'white'
+    #     },
+    #     style_cell={
+    #         'textAlign': 'center',
+    #         'fontWeight': 'bold',
+    #         'font-family': '"Open Sans", sans-serif',
+    #         'border': '1px solid #F7F7F7',
+    #         'border-bottom': '1px solid black',
+    #         'font-size': '12px',
+    #         'backgroundColor': '#F7F7F7',
+    #         'maxHeight': '40px',
+    #         'minWidth': '0px', 'maxWidth': '96px',
+    #
+    #     },
+    #     style_cell_conditional=[
+    #         {'if': {'column_id': ''},
+    #          'minWidth': '40px', 'width': '50px', 'maxWidth': '40px',
+    #          'textAlign': 'center',},
+    #     ],
+    #     style_table={
+    #         'padding': '0px',
+    #     },
+    #     style_as_list_view=True,
+    # )
     return html.Div(
         [
             html.Div(
@@ -333,27 +373,27 @@ def build_detail_row(col):
                     )
                 ],
                 className="block card",
-                style={"width": "calc(40% - 0px)"}
+                style={"width": "calc(60% - 0px)"}
             ),
-            html.Div(
-                [
-                    html.Div(
-                        [
-                            html.Div(
-                                [
-                                    "Average {} of Current Players by Team".format(map_stats[col]),
-                                ],
-                                className="card-header",
-                                style={"justify-content": "space-between"}
-                            ),
-                            table
-                        ],
-                        className="card--content"
-                    )
-                ],
-                className="block card",
-                style={"width": "calc(20% - 0px)"}
-            )
+            # html.Div(
+            #     [
+            #         html.Div(
+            #             [
+            #                 html.Div(
+            #                     [
+            #                         "Average {} of Current Players by Team".format(map_stats[col]),
+            #                     ],
+            #                     className="card-header",
+            #                     style={"justify-content": "space-between"}
+            #                 ),
+            #                 table
+            #             ],
+            #             className="card--content"
+            #         )
+            #     ],
+            #     className="block card",
+            #     style={"width": "calc(20% - 0px)"}
+            # )
         ],
         className="row"
     )
@@ -399,8 +439,17 @@ def build_compareall(toggle_3d, xaxis, yaxis, zaxis):
     df["Age"] = df["Age"].round(1)
     df["Height"] = df["Height"].round(1)
     df["Weight"] = df["Weight"].round(1)
+
+    # Add size for wins
+    df_records = nhlstats().standings()[['team.name', 'leagueRecord.wins']]
+    # use team name to set size to images
+    # merge add wins to team averages
+    df = df.merge(df_records, left_on='Team', right_on='team.name')
+    # increase marker size of Wins
+    df['leagueRecord.wins'] = np.power(df['leagueRecord.wins'], 3)
+
     if 1 not in toggle_3d:
-        plot = px.scatter(df, x=xaxis, y=yaxis, color="Team", color_discrete_map=teamcolors, custom_data=["id"])
+        plot = px.scatter(df, x=xaxis, y=yaxis, size='leagueRecord.wins', color="Team", color_discrete_map=teamcolors, custom_data=["id"])
         plot.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
@@ -438,11 +487,15 @@ def build_compareall(toggle_3d, xaxis, yaxis, zaxis):
                         x=np.array(team_x[0]),
                         y=np.array(team_y[0]),
                     ))
+        if (xaxis == 'Height') or (yaxis == 'Height'):
+            size_img = .4
+        else:
+            size_img = .5
         plot.update_layout_images(dict(
                 xref="x",
                 yref="y",
-                sizex=1,
-                sizey=1,
+                sizex=size_img,
+                sizey=size_img,
                 xanchor='center',
                 yanchor='middle'
         ))
