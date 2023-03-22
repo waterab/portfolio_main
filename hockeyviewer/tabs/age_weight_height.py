@@ -265,11 +265,7 @@ def build_detail_row(col):
     #add medin scatter for logos
     df_teammean = df_people_mean_col.groupby(["currentTeam.id", 'leagueRecord.wins'])[col].mean().reset_index()
     plot_team.add_scatter(x=df_teammean['leagueRecord.wins'], y=df_teammean[col], mode='markers', customdata=df_teammean['currentTeam.id'])
-    print(plot_team['data'][-1]['customdata'])
-
-    for x,y,z in zip(plot_team['data'][-1]['x'], plot_team['data'][-1]['y'], plot_team['data'][-1]['customdata']):
-        print(x,y,z)
-    #
+    for x,y,z in zip(plot_team['data'][-1]['x'], plot_team['data'][-1]['y'], plot_team['data'][-1]['customdata']):    #
     # # Add logo
     # for x in plot_team['data']['Scatter']:
     #     print(x)
