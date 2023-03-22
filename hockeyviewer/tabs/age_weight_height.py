@@ -483,10 +483,12 @@ def build_compareall(toggle_3d, xaxis, yaxis, zaxis):
                         x=np.array(team_x[0]),
                         y=np.array(team_y[0]),
                     ))
+
         if (xaxis == 'Height') or (yaxis == 'Height'):
-            size_img = .4
+            size_img = .2
         else:
             size_img = .5
+
         plot.update_layout_images(dict(
                 xref="x",
                 yref="y",
