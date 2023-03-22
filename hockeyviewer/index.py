@@ -14,7 +14,7 @@ layout = html.Div(
     [
         html.Div(
             [
-                dcc.Tabs(id="tabs-hockeyviewer", value='tab-tab',
+                dcc.Tabs(id="tabs-hockeyviewer", value='tab-players',
                     children=[
                         dcc.Tab(label='Player Age, Height & Weight (Current Season)', value='tab-players', selected_style=tab_selected_style),
                         dcc.Tab(label='Stats Vs. Player Attributes (10 Seasons)', value='tab-players-attr', selected_style=tab_selected_style),
