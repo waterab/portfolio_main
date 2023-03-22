@@ -82,7 +82,7 @@ def compare_stats_attr():
                 [
                     html.Div(
                         [
-                            html.Div([" Plot for Average by Team"], className="card-header"),
+                            html.Div(["PPG (Points Per Game) Vs. Player Attribute (Last 10 Seasons)"], className="card-header"),
                             dbc.Spinner([dcc.Graph(id="plot-stats-ahw")], color="primary", type="grow")
                         ],
                         className="card--content"
@@ -98,6 +98,46 @@ def compare_stats_attr():
 layout = html.Div(
     [
         compare_stats_attr(),
+        html.Div(
+            [
+                html.Div(
+                    [
+                        html.Div([dcc.Markdown('''
+
+                            ## PPG (others in work) Vs. Attributes Details:
+
+                            * Player attributes and stats were collected from the last ten seasons of the NHL.
+                            * BMI was then calculated (not in data) using height and weight:
+
+                            * cdc.gov formula:
+                            $$
+                            BMI=\\frac{mass}{height^2}703
+                            $$
+
+                            * Players with less than 20 games were excluded from data to prevent scewed data in Points Per Game.
+                            * Points Per Game:
+
+                            $$
+                            PPG=\\frac{Points}{Games}
+                            $$
+
+                            * Bins were created using pandas.qcut:
+
+                            >
+                            > "Discretize variable into equal-sized buckets based on rank or based on sample quantiles. For example 1000 values for 10 quantiles would produce a Categorical object indicating quantile membership for each data point."
+                            >
+
+                            ''', mathjax=True),
+
+                            #dcc.Graph(mathjax=True, figure=fig)
+                            ])
+                    ],
+                    className='card',
+                    style={'width': 'calc(92% - 0px)'}
+                )
+            ],
+            className='row'
+        )
     ]
 )
 
@@ -122,7 +162,7 @@ def build_compareall_stats(xaxis, yaxis):
     df_20['bins'] = pd.qcut(df_20[xaxis], 4)
     df_20 = df_20.sort_values(by=['bins'])
     df_20['bins'] = df_20['bins'].astype(str)
-    plot = px.box(df_20, x='bins', y=yaxis, color='primaryPosition.name')
+    plot = px.box(df_20, x='bins', y=yaxis, color='primaryPosition.name', color_discrete_sequence=px.colors.qualitative.T10)
 
     plot.update_layout(
         paper_bgcolor='rgba(0,0,0,0)',
